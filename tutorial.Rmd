@@ -1,0 +1,166 @@
+---
+title: "Brain GTex Retrotranscriptome"
+output: html_document
+date: "2023-05-22"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+```
+
+## Welcome to Day 2: Bulk Retrotranscriptomics
+
+Our goals for today are the following:
+
+## Setup
+
+First, we will set our working directories and load some packages. You should set your working directory to wherever you have downloaded or symlinked the "tea-biscuit-retro" directory. To figure out where your directory was downloaded, you can go into the directory and type "pwd".
+
+Second, we will be loading some packages required for today's tutorials. All packages should already be downloaded in R, so you shouldn't have any issues here. If you do, let me know!
+
+```{r}
+
+# Set working directory
+setwd("/efs/projects/tea-biscuit-retro/")
+
+# Load packages
+library(tidyverse)
+library(data.table)
+library(PCAtools)
+library(dplyr)
+library(matrixStats)
+library(edgeR)
+library(DESeq2)
+library(EnhancedVolcano)
+library(sva)
+library(ashr)
+library(cowplot)
+library(ggsci)
+library(ggplot2)
+library(ggpubr)
+library(fgsea)
+library(pheatmap)
+library(scales)
+
+
+```
+
+## Loading References
+
+```{r}
+
+# This file contains the Telescope TE annotation, and the mapping of gene IDs to symbols
+load("refs/refs.Rdata")
+
+# View the first few rows of this file: 
+head(retro.annot.v2)
+
+```
+
+## Loading Data
+
+Now, we will be loading the frontal cortex and hippocampus sample matrices.
+
+```{r}
+# Read frontal cortex samples
+fc.counts.tx <- readRDS("data/results.BRAIN-frontal_cortex/counts.gene.rds")
+fc.counts.rtx <- readRDS("data/results.BRAIN-frontal_cortex/counts.retro.rds")
+fc.samples <- readRDS("data/results.BRAIN-frontal_cortex/samples.rds")
+
+# Read hippocampus samples
+hippo.counts.tx <- readRDS("data/results.BRAIN-hippocampus/counts.gene.rds")
+hippo.counts.rtx <- readRDS("data/results.BRAIN-hippocampus/counts.retro.rds")
+hippo.samples <- readRDS("data/results.BRAIN-hippocampus/samples.rds")
+
+# Look at the counts
+head(fc.counts.tx)
+
+# Look at the sample sheet
+head(fc.samples)
+
+```
+
+Now that the data is all loaded, we want to combine the metadata.
+
+```{r}
+
+# Extract common metadata columns
+common.cols <- intersect(colnames(fc.samples), colnames(hippo.samples))
+
+print(common.cols)
+
+# Combine sample sheets by common metadata
+brain.samples <- rbind(fc.samples[common.cols], hippo.samples[common.cols])
+# Set rownames
+rownames(brain.samples) <- brain.samples$SAMPID
+
+
+```
+
+And now, combine the samples:
+
+```{r}
+# Combine .tx and .rtx counts for frontal cortex and hippocampus respectively 
+brain.rtx <- cbind(fc.counts.rtx, hippo.counts.rtx)
+brain.tx <- cbind(fc.counts.tx, hippo.counts.tx)
+
+# Combine the .tx and .rtx counts together 
+brain.comb <- rbind(brain.tx, brain.rtx)
+
+# Sanity check. All the samples .tx, .rtx, and sample sheets should match@
+stopifnot(all(names(brain.tx) == names(brain.rtx)))
+stopifnot(all(names(brain.tx) == rownames(brain.samples)))
+
+# Extract the HERV and LINE1 elements from all samples
+brain.herv <- brain.comb[rownames(retro.annot.v2[retro.annot.v2$Class == "HERV",]),]
+brain.l1 <- brain.comb[rownames(retro.annot.v2[retro.annot.v2$Class == "L1",]),]
+
+head(brain.herv)
+```
+
+## Batch Correction
+
+GTEx consortium datasets are known to have batch issues, such as ischemic time, the actual batch that the samples were processed in, gender, etc. For the sake of keeping this brief, today we will be batch correcting for just ischemic time. SVA, which is the batch correction tool we are using, only takes discrete variables. Since ischemic time is a continuous variable, we will be dividing it into chunks.
+
+```{r}
+max(brain.samples$SMTSISCH) 
+
+```
+
+The max ischemic.time is 1360, meaning we will need 5 chunks.
+
+```{r}
+
+ischemic.time = ifelse(brain.samples$SMTSISCH <= 300, 1, 
+                          ifelse(brain.samples$SMTSISCH > 300 & 
+                                   brain.samples$SMTSISCH <= 600, 2,
+                                 ifelse(brain.samples$SMTSISCH > 600 &
+                                          brain.samples$SMTSISCH <= 900, 3,
+                                        ifelse(brain.samples$SMTSISCH > 900 &
+                                                 brain.samples$SMTSISCH <= 1200, 4, 5)))) 
+
+
+print(ischemic.time)
+```
+
+Our variable of interest is the tissue (frontal cortex vs. hippocampus), so we will be accounting for that in our batch correction as well.
+
+```{r}
+tissue = sapply(as.character(brain.samples$SMTSD),
+            switch, "Brain - Frontal Cortex (BA9)" = 1,
+            "Brain - Hippocampus" = 2,
+            USE.NAMES = F)
+```
+
+Now time for the actual batch correction! You may run the following code. It will take a little bit of time!
+
+```{r}
+brain.comb.corrected = ComBat_seq(counts = as.matrix(brain.comb),
+                            batch = ischemic.time,
+                            group = tissue,
+                            full_mod = TRUE)
+
+# If you encountered issues in running the above, you can magically load the output below: 
+brain.comb.corrected <- readRDS("r_outputs/brain.comb.correct.Rds")
+```
