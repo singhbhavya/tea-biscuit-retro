@@ -475,5 +475,37 @@ plot.counts <- function(df, gene) {
 plot.counts(brain.herv.cor.dds, "HERVH_12q13.2b")
 plot.counts(brain.herv.cor.dds, "ERVLB4_20q13.12a")
 
+############################### FAMILY LEVEL UP ############################### 
+
+upreg.hervs.df <- as.data.frame(sig.hervs)
+upreg.hervs.df$upregin <- ifelse(upreg.hervs.df$log2FoldChange > 0, "Hippocampus", "Frontal Cortex")
+upreg.hervs.df$family <- retro.annot.v2$Family[match(upreg.hervs.df$display, 
+                                                     retro.annot.v2$Locus)]
+
+upreg.families <-
+  upreg.hervs.df %>% dplyr::count(family, upregin, sort = TRUE) 
+
+
+ggplot(upreg.families, aes(fill=reorder(family, -n), y=upregin, x=n)) + 
+  geom_bar(position="stack", stat="identity", colour="black", size=0.3) + 
+  scale_fill_manual(values = c(pal_futurama("planetexpress")(12), 
+                               pal_npg("nrc", alpha = 0.7)(10),
+                               pal_jco("default", alpha=0.7)(10),
+                               pal_nejm("default", alpha=0.7)(8),
+                               pal_tron("legacy", alpha=0.7)(7),
+                               pal_lancet("lanonc", alpha=0.7)(9),
+                               pal_startrek("uniform", alpha=0.7)(7)),
+                    breaks = unique(retro.annot.v2$Family),
+                    labels = unique(retro.annot.v2$Family)) + 
+  coord_flip() +
+  theme_cowplot() +  
+  theme(axis.text.x = element_text(angle=45, hjust=1)) +
+  guides(fill=guide_legend(title="HERV Family")) +
+  ylab(NULL) +
+  xlab("Number of HERV Loci") + 
+  theme(legend.position = c("right"),
+        plot.margin = margin(10, 10, 10, 40),
+        axis.line=element_blank()) + 
+  guides(fill = guide_legend(title = "HERV family", ncol = 2))
 
 
