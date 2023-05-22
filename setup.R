@@ -375,6 +375,18 @@ save(brain.herv.cor.dds, brain.herv.cor.pca.obj, file = "r_outputs/brain.herv.co
 lfc.cutoff <- 1.5
 pval=0.001 # p value threshold
 
+############################# TOP GENES / HERVS ################################
+
+brain.res <- DESeq2::results(brain.gh.cor.dds, contrast=c("SMTSD", "Brain - Hippocampus", 
+                                                          "Brain - Frontal Cortex (BA9)"), alpha=pval)
+
+brain.res$display <- gene_table[rownames(brain.res),]$display
+brain.res$class <- gene_table[rownames(brain.res),]$gene_type
+
+sig.gh <- subset(brain.res, padj < pval & abs(log2FoldChange) > lfc.cutoff)
+sig.gh <- sig.gh[order(sig.gh$padj),]
+
+
 ############################### TOP HERVs ONLY #################################
 
 brain.res.herv <- DESeq2::results(brain.herv.cor.dds, contrast=c("SMTSD", "Brain - Hippocampus", 
@@ -508,4 +520,70 @@ ggplot(upreg.families, aes(fill=reorder(family, -n), y=upregin, x=n)) +
         axis.line=element_blank()) + 
   guides(fill = guide_legend(title = "HERV family", ncol = 2))
 
+
+################################### PATHWAYS ###################################
+
+pathways.hallmark <- gmtPathways("gsea/h.all.v2023.1.Hs.symbols.gmt")
+
+################################ FGSEA FUNCTION ################################
+
+make.fsgsea <- function(pathway, fgsea.res, clust_name, pathway_name) {
+  
+  fgsea.res$SYMBOL <- gene_table[rownames(fgsea.res),]$display
+  
+  fgsea.res <- as.data.frame(fgsea.res) %>% 
+    dplyr::select(SYMBOL, stat) %>% 
+    na.omit() %>% 
+    distinct() %>% 
+    group_by(SYMBOL) %>% 
+    summarize(stat=mean(stat))
+  
+  fgsea.ranks <- deframe(fgsea.res)
+  
+  fgsea.out <- fgsea(pathways=pathway, 
+                     stats=fgsea.ranks, 
+                     nPermSimple = 10000,
+                     eps=0)
+  return(fgsea.out)
+  
+  assign(paste0(clust_name, ".", pathway_name, ".fgsea.out"), fgsea.out, envir = .GlobalEnv )
+}
+
+################################ HALLMARK FGSEA ################################
+
+fsgsea.hallmarks <- list(
+  "Hippocampus" = make.fsgsea(pathways.hallmark, brain.res,"hallmark"))
+
+fgseaResTidy <- fsgsea.hallmarks[["Hippocampus"]] %>%
+  as_tibble() %>%
+  arrange(desc(NES))
+
+rownames(fgseaResTidy) <- fgseaResTidy$pathway
+
+ggplot(fgseaResTidy, aes(reorder(pathway, NES), NES)) +
+  geom_col(aes(fill=padj<0.05)) +
+  coord_flip() +
+  labs(x="Pathway", y="Normalized Enrichment Score",
+       title="Hippocampus") + 
+  theme_minimal()
+
+# Get longform df
+fsgsea.hallmarks.summary <- rbindlist(fsgsea.hallmarks, idcol = "index")
+
+# Recode df
+fsgsea.hallmarks.summary$pathway <- gsub("HALLMARK_","",fsgsea.hallmarks.summary$pathway)
+fsgsea.hallmarks.summary$pathway <- gsub("_"," ",fsgsea.hallmarks.summary$pathway)
+
+# Bubble plot
+ggplot(fsgsea.hallmarks.summary, aes(x = index, 
+                                     y = pathway, 
+                                     size = -log(padj), 
+                                     color = NES)) +
+  geom_point() +
+  scale_size(name = "-log (P value)", range = c(1, 10)) + 
+  theme_cowplot() +
+  theme(axis.text.x = element_text(angle = 35, hjust = 1))+
+  scale_colour_gradientn(colors = viridis_pal()(10)) +
+  xlab("Hippocampus") +
+  ylab("Hallmark Pathway") 
 
