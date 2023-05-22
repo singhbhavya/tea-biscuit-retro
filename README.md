@@ -22,7 +22,7 @@ Tuesday May 23 – Practicals I: Downstream Bulk Retrotranscriptomics
 
 Option 1:
 
-Log into AWS as per Matthew Bendall's tutorial from [yesterday](https://github.com/nixonlab/teabiscuit), and symlink this entire directory into your home directory. All you *really* need are the the `results` and `fgsea` directories, but if you symlink the entire directory (as suggested), you'll be able to access intermediate files in case one of the commands fails (I hope not though!)
+Log into AWS as per Matthew Bendall's tutorial from [yesterday](https://github.com/nixonlab/teabiscuit), and symlink this entire directory into your home directory. All you *really* need are the the `results`, `refs`, and `fgsea` directories, but if you symlink the entire directory (as suggested), you'll be able to access intermediate files in case one of the commands fails (I hope not though!)
 
 ```
 cd /fsx/users/[youruid]
