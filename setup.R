@@ -95,7 +95,7 @@ brain.comb.corrected = ComBat_seq(counts = as.matrix(brain.comb),
                             group = tissue,
                             full_mod = TRUE)
 
-save(brain.comb.corrected, file="brain.comb.correct.Rds")
+save(brain.comb.corrected, file="r_outputs/brain.comb.correct.Rdata")
 
 ############################# SUBSET HERVs and L1s #############################
 
@@ -172,7 +172,7 @@ te_percent <- function(herv.df, rtx.df, comb.df, metadata, metadata.col) {
   return(output)
 }
 
-###################### COUNT READS PER AGIRRE TISSUE TYPE ###################### 
+###################### COUNT READS PER BRAIN TISSUE TYPE #######################
 
 brain.te.percent <-
   te_percent(brain.filt.cor.herv, brain.filt.cor.rtx, brain.filt.cor.comb,
