@@ -187,6 +187,7 @@ brain.te.percent$te.reads %>%
   group_by(type) %>%
   summarise_at(vars(proportion), list(name = mean))
 
+pdf("plots/brain_te_percent.pdf", height=3, width=3)
 brain.te.percent$te.reads %>%
   ggplot(aes(x=type, y=proportion, fill=type))  +
   geom_boxplot(notch = TRUE) +
@@ -200,8 +201,10 @@ brain.te.percent$te.reads %>%
                                "Brain - Hippocampus" = pal_jco("default", alpha = 0.8)(7)[7])) + 
   scale_x_discrete(labels=c("Brain - Frontal Cortex (BA9)" = "FC", 
                             "Brain - Hippocampus" = "HC")) +
-  theme(aspect.ratio = 1)
+  theme(aspect.ratio = 1) 
+dev.off()
 
+pdf("plots/brain_herv_percent.pdf", height=3, width=3)
 brain.te.percent$herv.reads %>%
   ggplot(aes(x=type, y=proportion, fill=type))  +
   geom_boxplot(notch = TRUE) +
@@ -216,6 +219,7 @@ brain.te.percent$herv.reads %>%
   scale_x_discrete(labels=c("Brain - Frontal Cortex (BA9)" = "FC", 
                             "Brain - Hippocampus" = "HC")) +
   theme(aspect.ratio = 1)
+dev.off()
 
 ################################# FUNCTION SCREE PLOT #################################
 
@@ -281,6 +285,7 @@ all(rownames(brain.gh.pca.obj$loadings) %in% rownames(gene_table))
 rownames(brain.gh.pca.obj$loadings) <- 
   gene_table[rownames(brain.gh.pca.obj$loadings), 'display']
 
+pdf("plots/brain_pca_genes_hervs_uncorrected.pdf", height=5, width=7)
 biplot(brain.gh.pca.obj, 
        lab = NULL,
        showLoadings = TRUE,
@@ -295,7 +300,9 @@ biplot(brain.gh.pca.obj,
        colkey = c("Brain - Frontal Cortex (BA9)" = pal_jco("default", alpha = 0.8)(7)[1], 
                   "Brain - Hippocampus" = pal_jco("default", alpha = 0.8)(7)[7]),
        legendPosition = "right")  +
+  theme(aspect.ratio = 1) +
   theme_cowplot()
+dev.off()
 
 save(brain.gh.dds, brain.gh.pca.obj, file = "r_outputs/brain.gh.dds.pca.Rdata")
 
@@ -318,9 +325,10 @@ all(rownames(brain.gh.cor.pca.obj$loadings) %in% rownames(gene_table))
 rownames(brain.gh.cor.pca.obj$loadings) <- 
   gene_table[rownames(brain.gh.cor.pca.obj$loadings), 'display']
 
+pdf("plots/brain_pca_genes_hervs_corrected.pdf", height=5, width=7)
 biplot(brain.gh.cor.pca.obj, 
        lab = NULL,
-       showLoadings = TRUE,
+       showLoadings = FALSE,
        boxedLoadingsNames = TRUE,
        fillBoxedLoadings = alpha("white", 3/4),
        pointSize = 2, 
@@ -333,6 +341,7 @@ biplot(brain.gh.cor.pca.obj,
                   "Brain - Hippocampus" = pal_jco("default", alpha = 0.8)(7)[7]),
        legendPosition = "right")  +
   theme_cowplot()
+dev.off()
 
 save(brain.gh.cor.dds, brain.gh.cor.pca.obj, file = "r_outputs/brain.gh.cor.dds.pca.Rdata")
 
@@ -352,9 +361,10 @@ brain.herv.cor.pca.obj <-
                metadata = brain.samples, 
                var = 0.1)
 
+pdf("plots/brain_pca_hervs_corrected.pdf", height=5, width=7)
 biplot(brain.herv.cor.pca.obj, 
        lab = NULL,
-       showLoadings = TRUE,
+       showLoadings = FALSE,
        boxedLoadingsNames = TRUE,
        fillBoxedLoadings = alpha("white", 3/4),
        pointSize = 2, 
@@ -367,6 +377,7 @@ biplot(brain.herv.cor.pca.obj,
                   "Brain - Hippocampus" = pal_jco("default", alpha = 0.8)(7)[7]),
        legendPosition = "right")  +
   theme_cowplot()
+dev.off()
 
 save(brain.herv.cor.dds, brain.herv.cor.pca.obj, file = "r_outputs/brain.herv.cor.dds.pca.Rdata")
 
@@ -426,6 +437,7 @@ annoRow <- as.data.frame(retro.annot.v2[,c("TE_type", "Locus")])
 annoRow <- annoRow[rownames(sig.hervs),]
 annoRow <- subset(annoRow, select = -c(2))
 
+pdf("plots/brain_sig_hervs_heatmap.pdf", height=10, width=10)
 pheatmap(assay(brain.herv.cor.tform)[rownames(sig.hervs),], 
          main="Differentially Expressed HERVs",
          cluster_rows=TRUE,
@@ -440,17 +452,18 @@ pheatmap(assay(brain.herv.cor.tform)[rownames(sig.hervs),],
          annotation_col=df,
          annotation_row=annoRow,
          annotation_colors = annoCol)
-
+dev.off()
 
 ############################# VOLCANO DZ VS LZ #################################
 
+pdf("plots/brain_herv_volcano.pdf", height=7, width=7)
 EnhancedVolcano(sig.hervs,
                 lab = rownames(sig.hervs),
                 x = 'log2FoldChange',
                 y = 'pvalue',
                 title = 'Frontal Cortex vs Hippocampus')
 
-
+dev.off()
 
 ########################## PLOT INDIVIDUAL HERVs ###############################
 
@@ -483,9 +496,13 @@ plot.counts <- function(df, gene) {
 }
 
 
-
+pdf("plots/brain_HERVH_12q13.2b.pdf", height=4, width=3)
 plot.counts(brain.herv.cor.dds, "HERVH_12q13.2b")
+dev.off()
+
+pdf("plots/brain_ERVLB4_20q13.12a.pdf", height=4, width=3)
 plot.counts(brain.herv.cor.dds, "ERVLB4_20q13.12a")
+dev.off()
 
 ############################### FAMILY LEVEL UP ############################### 
 
@@ -497,7 +514,7 @@ upreg.hervs.df$family <- retro.annot.v2$Family[match(upreg.hervs.df$display,
 upreg.families <-
   upreg.hervs.df %>% dplyr::count(family, upregin, sort = TRUE) 
 
-
+pdf("plots/brain_family_level.pdf", height=8, width=6)
 ggplot(upreg.families, aes(fill=reorder(family, -n), y=upregin, x=n)) + 
   geom_bar(position="stack", stat="identity", colour="black", size=0.3) + 
   scale_fill_manual(values = c(pal_futurama("planetexpress")(12), 
@@ -519,7 +536,7 @@ ggplot(upreg.families, aes(fill=reorder(family, -n), y=upregin, x=n)) +
         plot.margin = margin(10, 10, 10, 40),
         axis.line=element_blank()) + 
   guides(fill = guide_legend(title = "HERV family", ncol = 2))
-
+dev.off()
 
 ################################### PATHWAYS ###################################
 
@@ -560,12 +577,14 @@ fgseaResTidy <- fsgsea.hallmarks[["Hippocampus"]] %>%
 
 rownames(fgseaResTidy) <- fgseaResTidy$pathway
 
+pdf("plots/brain_hallmark.pdf", height=10, width=7)
 ggplot(fgseaResTidy, aes(reorder(pathway, NES), NES)) +
   geom_col(aes(fill=padj<0.05)) +
   coord_flip() +
   labs(x="Pathway", y="Normalized Enrichment Score",
        title="Hippocampus") + 
-  theme_minimal()
+  theme_cowplot()
+dev.off()
 
 # Get longform df
 fsgsea.hallmarks.summary <- rbindlist(fsgsea.hallmarks, idcol = "index")
@@ -575,6 +594,7 @@ fsgsea.hallmarks.summary$pathway <- gsub("HALLMARK_","",fsgsea.hallmarks.summary
 fsgsea.hallmarks.summary$pathway <- gsub("_"," ",fsgsea.hallmarks.summary$pathway)
 
 # Bubble plot
+pdf("plots/brain_hallmark_bubble.pdf", height=8.5, width=6)
 ggplot(fsgsea.hallmarks.summary, aes(x = index, 
                                      y = pathway, 
                                      size = -log(padj), 
@@ -586,4 +606,4 @@ ggplot(fsgsea.hallmarks.summary, aes(x = index,
   scale_colour_gradientn(colors = viridis_pal()(10)) +
   xlab("Hippocampus") +
   ylab("Hallmark Pathway") 
-
+dev.off()
