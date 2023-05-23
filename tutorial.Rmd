@@ -4,7 +4,7 @@ output: html_document
 date: "2023-05-22"
 ---
 
-```{r setup, include=FALSE}
+```{r setup, message=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 
 ```
@@ -31,7 +31,7 @@ First, we will set our working directories and load some packages. You should se
 
 Second, we will be loading some packages required for today's tutorials. All packages should already be downloaded in R, so you shouldn't have any issues here. If you do, let me know!
 
-```{r load-packages}
+```{r load-packages, message=FALSE, warning=FALSE, error=FALSE}
 
 # Set working directory
 setwd("/efs/projects/tea-biscuit-retro/")
@@ -60,7 +60,7 @@ library(scales)
 
 ## Loading References
 
-```{r load-refs}
+```{r load-refs, message=FALSE, warning=FALSE, error=FALSE}
 
 # This file contains the Telescope TE annotation, and the mapping of gene IDs to symbols
 load("refs/refs.Rdata")
@@ -74,7 +74,7 @@ head(retro.annot.v2)
 
 Now, we will be loading the frontal cortex and hippocampus sample matrices.
 
-```{r load-data}
+```{r load-data, message=FALSE, warning=FALSE, error=FALSE}
 # Read frontal cortex samples
 fc.counts.tx <- readRDS("data/results.BRAIN-frontal_cortex/counts.gene.rds")
 fc.counts.rtx <- readRDS("data/results.BRAIN-frontal_cortex/counts.retro.rds")
@@ -86,16 +86,16 @@ hippo.counts.rtx <- readRDS("data/results.BRAIN-hippocampus/counts.retro.rds")
 hippo.samples <- readRDS("data/results.BRAIN-hippocampus/samples.rds")
 
 # Look at the counts
-head(fc.counts.tx)
+#head(fc.counts.tx)
 
 # Look at the sample sheet
-head(fc.samples)
+#head(fc.samples)
 
 ```
 
 Now that the data is all loaded, we want to combine the metadata.
 
-```{r combine-data}
+```{r combine-data, message=FALSE, warning=FALSE, error=FALSE}
 
 # Extract common metadata columns
 common.cols <- intersect(colnames(fc.samples), colnames(hippo.samples))
@@ -112,7 +112,7 @@ rownames(brain.samples) <- brain.samples$SAMPID
 
 And now, combine the samples:
 
-```{r combine-samples}
+```{r combine-samples, message=FALSE, warning=FALSE, error=FALSE}
 # Combine .tx and .rtx counts for frontal cortex and hippocampus respectively 
 brain.rtx <- cbind(fc.counts.rtx, hippo.counts.rtx)
 brain.tx <- cbind(fc.counts.tx, hippo.counts.tx)
@@ -128,21 +128,21 @@ stopifnot(all(names(brain.tx) == rownames(brain.samples)))
 brain.herv <- brain.comb[rownames(retro.annot.v2[retro.annot.v2$Class == "HERV",]),]
 brain.l1 <- brain.comb[rownames(retro.annot.v2[retro.annot.v2$Class == "L1",]),]
 
-head(brain.herv)
+#head(brain.herv)
 ```
 
 ## Batch Correction
 
 GTEx consortium datasets are known to have batch issues, such as ischemic time, the actual batch that the samples were processed in, gender, etc. For the sake of keeping this brief, today we will be batch correcting for just ischemic time. SVA, which is the batch correction tool we are using, only takes discrete variables. Since ischemic time is a continuous variable, we will be dividing it into chunks.
 
-```{r look-at-ischemic}
+```{r look-at-ischemic, message=FALSE, warning=FALSE, error=FALSE}
 max(brain.samples$SMTSISCH) 
 
 ```
 
 The max ischemic.time is 1360, meaning we will need 5 chunks.
 
-```{r set-ischemic-batch}
+```{r set-ischemic-batch, message=FALSE, warning=FALSE, error=FALSE}
 
 ischemic.time = ifelse(brain.samples$SMTSISCH <= 300, 1, 
                           ifelse(brain.samples$SMTSISCH > 300 & 
@@ -158,7 +158,7 @@ print(ischemic.time)
 
 Our variable of interest is the tissue (frontal cortex vs. hippocampus), so we will be accounting for that in our batch correction as well.
 
-```{r set-tissue-batch}
+```{r set-tissue-batch, message=FALSE, warning=FALSE, error=FALSE}
 tissue = sapply(as.character(brain.samples$SMTSD),
             switch, "Brain - Frontal Cortex (BA9)" = 1,
             "Brain - Hippocampus" = 2,
@@ -167,7 +167,7 @@ tissue = sapply(as.character(brain.samples$SMTSD),
 
 Now time for the actual batch correction! You may run the following code. It will take a little bit of time!
 
-```{r batch-correction}
+```{r batch-correction, message=FALSE, warning=FALSE, error=FALSE}
 brain.comb.corrected = ComBat_seq(counts = as.matrix(brain.comb),
                             batch = ischemic.time,
                             group = tissue,
@@ -179,7 +179,7 @@ load("r_outputs/brain.comb.correct.Rdata")
 
 ## Set Up HERV and L1 Matrices
 
-```{r herv-l1-setup}
+```{r herv-l1-setup, message=FALSE, warning=FALSE, error=FALSE}
 
 # Convert the corrected, batch corrected combined matrix to a dataframe
 brain.comb.corrected <- as.data.frame(brain.comb.corrected)
@@ -196,7 +196,7 @@ brain.cor.l1 <- as.data.frame(brain.cor.rtx[rownames(retro.annot.v2[retro.annot.
 
 First, let's filter the original data:
 
-```{r filter-original-data}
+```{r filter-original-data, message=FALSE, warning=FALSE, error=FALSE}
 
 # Minimum count threshold
 cutoff.count <- 5
@@ -218,7 +218,7 @@ load("r_outputs/brain.filt.Rdata")
 
 And now the batch-corrected data:
 
-```{r}
+```{r filter-batch, message=FALSE, warning=FALSE, error=FALSE}
 cutoff.count <- 5
 
 # Minimum number of samples meeting the minimum count threshold
@@ -244,7 +244,7 @@ We will now be visualizing the corrected and uncorrected data based on a gene-an
 
 The following is the function we will use to create PCA objects:
 
-```{r pca-function}
+```{r pca-function, message=FALSE, warning=FALSE, error=FALSE}
 
 pca_standard <- function(tform, metadata, var) {
   
@@ -293,7 +293,7 @@ pca_standard <- function(tform, metadata, var) {
 
 Now for DESeq2 on our original data:
 
-```{r deseq-original}
+```{r deseq-original, message=FALSE, warning=FALSE, error=FALSE}
 
 # Note that we are using the filtered and combined data matrix here. This means that the matrix contains both transcriptomic and retrotranscriptomic data, from both frontal cortex and hippocampus. 
 
@@ -313,7 +313,7 @@ brain.gh.tform <- DESeq2::varianceStabilizingTransformation(brain.gh.dds,
 
 With the tform matrix, we can now run PCA on the original data:
 
-```{r pca-original}
+```{r pca-original, message=FALSE, warning=FALSE, error=FALSE}
 
 # PCA on the original data, using the function from earlier 
 brain.gh.pca.obj <-
@@ -333,7 +333,7 @@ load("r_outputs/brain.gh.dds.pca.Rdata")
 
 Now we can plot the PCA!
 
-```{r plot-original-pca}
+```{r plot-original-pca, message=FALSE, warning=FALSE, error=FALSE}
 
 biplot(brain.gh.pca.obj, 
        lab = NULL,
@@ -356,7 +356,7 @@ biplot(brain.gh.pca.obj,
 
 Let's do DESeq2 on our corrected data:
 
-```{r deseq-corrected}
+```{r deseq-corrected, message=FALSE, warning=FALSE, error=FALSE}
 
 # Generating the DESeq dataset:
 brain.gh.cor.dds <- DESeq2::DESeqDataSetFromMatrix(countData = brain.filt.cor.comb,
@@ -375,7 +375,7 @@ brain.gh.cor.tform <- DESeq2::varianceStabilizingTransformation(brain.gh.cor.dds
 
 PCA on corrected data:
 
-```{r pca-corrected}
+```{r pca-corrected, message=FALSE, warning=FALSE, error=FALSE}
 
 # PCA on the original data, using the function from earlier 
 brain.gh.cor.pca.obj <-
@@ -396,7 +396,7 @@ load("r_outputs/brain.gh.cor.dds.pca.Rdata")
 
 Now we can plot the PCA of our corrected data!
 
-```{r plot-corrected-pca}
+```{r plot-corrected-pca, message=FALSE, warning=FALSE, error=FALSE}
 
 biplot(brain.gh.cor.pca.obj, 
        lab = NULL,
@@ -422,7 +422,7 @@ biplot(brain.gh.cor.pca.obj,
 
 We will be creating the same PCA plots as before, but instead of using the combined matrices, we will use ONLY HERV counts. Let's see if things look any different!
 
-```{r deseq-herv}
+```{r deseq-herv, message=FALSE, warning=FALSE, error=FALSE}
 
 # Generating the DESeq dataset:
 brain.herv.cor.dds <- DESeq2::DESeqDataSetFromMatrix(countData = brain.filt.cor.herv,
@@ -449,7 +449,7 @@ load("r_outputs/brain.herv.cor.dds.pca.Rdata")
 
 Now let's plot the PCA!
 
-```{r}
+```{r plot-herv-pca, message=FALSE, warning=FALSE, error=FALSE}
 biplot(brain.herv.cor.pca.obj, 
        lab = NULL,
        showLoadings = FALSE,
@@ -474,7 +474,7 @@ biplot(brain.herv.cor.pca.obj,
 
 Function to count HERV and TE reads per tissue-type:
 
-```{r read-count-function}
+```{r read-count-function, message=FALSE, warning=FALSE, error=FALSE}
 te_percent <- function(herv.df, rtx.df, comb.df, metadata, metadata.col) {
   
   herv.reads <- as.data.frame(colSums(herv.df))
@@ -508,7 +508,7 @@ te_percent <- function(herv.df, rtx.df, comb.df, metadata, metadata.col) {
 
 What % of the total reads are made up by TEs and HERVs?
 
-```{r calculate-te-hervs}
+```{r calculate-te-hervs, message=FALSE, warning=FALSE, error=FALSE}
 
 # Use function to count reads
 brain.te.percent <-
@@ -530,7 +530,7 @@ brain.te.percent$te.reads %>%
 
 Let's plot our results!
 
-```{r plot-percent}
+```{r plot-percent, message=FALSE, warning=FALSE, error=FALSE}
 
 # Plot TE percent
 brain.te.percent$te.reads %>%
@@ -575,7 +575,7 @@ Here, we will be using the DESEq2 objects from earlier to identify and visualize
 
 First, let's set our p-value and log2foldchange thresholds:
 
-```{r set-thresholds}
+```{r set-thresholds, message=FALSE, warning=FALSE, error=FALSE}
 
 lfc.cutoff <- 1.5
 pval=0.001 
@@ -584,7 +584,7 @@ pval=0.001
 
 Now, let's extract our significantly differentially-expressed genes and HERVs:
 
-```{r de-genes-hervs}
+```{r de-genes-hervs, message=FALSE, warning=FALSE, error=FALSE}
 # Extract DE results, comparing Hippocampus to the Frontal Cortex. In this case, the hippocampus is the numerator, meaning that any genes with a POSITIVE log2fold change have higher expression in the hippocampus, and lower expression in the frontal cortex.
 
 brain.res <- DESeq2::results(brain.gh.cor.dds, contrast=c("SMTSD", "Brain - Hippocampus", 
@@ -607,7 +607,7 @@ head(sig.gh)
 
 Using our HERV-only DESEq object, let's extract just the HERVs:
 
-```{r de-hervs}
+```{r de-hervs, message=FALSE, warning=FALSE, error=FALSE}
 
 # Extract DE results, comparing Hippocampus to the Frontal Cortex. In this case, the hippocampus is the numerator, meaning that any genes with a POSITIVE log2fold change have higher expression in the hippocampus, and lower expression in the frontal cortex.
 
@@ -627,7 +627,7 @@ head(sig.hervs)
 
 List top HERVs:
 
-```{r top-hervs}
+```{r top-hervs, message=FALSE, warning=FALSE, error=FALSE}
 upvars <- rownames(subset(sig.hervs, log2FoldChange>0)) # HERVs upregulated in hippocampus
 downvars <- rownames(subset(sig.hervs, log2FoldChange<0)) # HERVs upregulated in frontal cortex
 ```
@@ -636,7 +636,7 @@ downvars <- rownames(subset(sig.hervs, log2FoldChange<0)) # HERVs upregulated in
 
 Let's set up some colors for the heatmap:
 
-```{r heatmap-colors}
+```{r heatmap-colors, message=FALSE, warning=FALSE, error=FALSE}
 
 # Heatmap colors
 cols <- rgb_gsea(palette = c("default"), n = 14, alpha = 0.7, reverse = FALSE)
@@ -656,7 +656,7 @@ annoCol <- list(SMTSD = annoCol)
 
 Okay, time to rock and roll.
 
-```{r}
+```{r, message=FALSE, warning=FALSE, error=FALSE}
 
 # Set up row annotations
 annoRow <- as.data.frame(retro.annot.v2[,c("TE_type", "Locus")])
@@ -685,7 +685,7 @@ pheatmap(assay(brain.herv.cor.tform)[rownames(sig.hervs),],
 
 We can also visualize HERVs with the highest log2fold changes and p-values using volcano plots;
 
-```{r volcano}
+```{r volcano, message=FALSE, warning=FALSE, error=FALSE}
 
 EnhancedVolcano(sig.hervs,
                 lab = rownames(sig.hervs),
@@ -700,7 +700,7 @@ EnhancedVolcano(sig.hervs,
 
 Here is a custom function I created to plot HERV counts:
 
-```{r plot-counts-function}
+```{r plot-counts-function, message=FALSE, warning=FALSE, error=FALSE}
 plot.counts <- function(df, gene) {
   
   as.data.frame(plotCounts(df, 
@@ -733,7 +733,7 @@ plot.counts <- function(df, gene) {
 
 Let's pick out a few random HERVs from the volcano plot to visualize:
 
-```{r plot-ind-hervs}
+```{r plot-ind-hervs, message=FALSE, warning=FALSE, error=FALSE}
 
 plot.counts(brain.herv.cor.dds, "HERVH_12q13.2b")
 
@@ -746,7 +746,7 @@ plot.counts(brain.herv.cor.dds, "ERVLB4_20q13.12a")
 
 Different HERV families can have different broad functions. Sometimes, it can be useful to take a look at the bigger picture.
 
-```{r family-level}
+```{r family-level, message=FALSE, warning=FALSE, error=FALSE}
 
 # Count the number of HERV loci, and tally which families they belong to.
 # Pull out significant HERVs
@@ -764,7 +764,7 @@ upreg.families <-
 
 Let's plot it!
 
-```{r plot-family}
+```{r plot-family, message=FALSE, warning=FALSE, error=FALSE}
 ggplot(upreg.families, aes(fill=reorder(family, -n), y=upregin, x=n)) + 
   geom_bar(position="stack", stat="identity", colour="black", size=0.3) + 
   scale_fill_manual(values = c(pal_futurama("planetexpress")(12), 
@@ -794,14 +794,14 @@ ggplot(upreg.families, aes(fill=reorder(family, -n), y=upregin, x=n)) +
 
 Import pathways:
 
-```{r import-hallmark}
+```{r import-hallmark, message=FALSE, warning=FALSE, error=FALSE}
 pathways.hallmark <- gmtPathways("gsea/h.all.v2023.1.Hs.symbols.gmt")
 head(pathways.hallmark)
 ```
 
 Here is a function I wrote to quickly do a fast gene-set enrichment analysis.
 
-```{r fgsea-function}
+```{r fgsea-function, message=FALSE, warning=FALSE, error=FALSE}
 make.fsgsea <- function(pathway, fgsea.res, clust_name, pathway_name) {
   
   fgsea.res$SYMBOL <- gene_table[rownames(fgsea.res),]$display
@@ -827,7 +827,7 @@ make.fsgsea <- function(pathway, fgsea.res, clust_name, pathway_name) {
 
 Let's run the FGSEA for the hallmark pathways!
 
-```{r run-fgsea}
+```{r run-fgsea, message=FALSE, warning=FALSE, error=FALSE}
 
 # Run the function 
 fsgsea.hallmarks <- list(
@@ -848,7 +848,7 @@ rownames(fgseaResTidy) <- fgseaResTidy$pathway
 
 This is a classic way to plot GSEA:
 
-```{r classic-plot}
+```{r classic-plot, message=FALSE, warning=FALSE, error=FALSE}
 ggplot(fgseaResTidy, aes(reorder(pathway, NES), NES)) +
   geom_col(aes(fill=padj<0.05)) +
   coord_flip() +
@@ -862,7 +862,7 @@ ggplot(fgseaResTidy, aes(reorder(pathway, NES), NES)) +
 
 If you'd like a slightly fancier way to plot the same, you can also do bubble plots!
 
-```{r}
+```{r, message=FALSE, warning=FALSE, error=FALSE}
 
 # Get longform df
 fsgsea.hallmarks.summary <- rbindlist(fsgsea.hallmarks, idcol = "index")
