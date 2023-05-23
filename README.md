@@ -28,9 +28,6 @@ Log into AWS as per Matthew Bendall's tutorial from [yesterday](https://github.c
 cp -R /efs/projects/tea-biscuit-retro . 
 cd tea-biscuit-retro
 ```
-And now, create your own R script: `File -> New File -> R Script`
-
-Follow along by copying and pasting from the `tutorial.md` file.
 
 ### Option 2:
 
@@ -41,6 +38,8 @@ Ask Bhavya for *secret link* to download (sorry, cannot post the link here).
 ### Option 1
 
 You can create your own RScript and copy-paste commands from the `tutorial.md` or `.html` file. Or, you can open the tutorial.Rmd and just run things with me. 
+
+Ceate your own R script: `File -> New File -> R Script`. Follow along by copying and pasting from the `tutorial.md` file.
 
 ### Option 2
 
