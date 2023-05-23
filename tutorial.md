@@ -20,7 +20,7 @@ First, we will set our working directories and load some packages. You should se
 
 ```
 # Set working directory
-setwd("/efs/projects/tea-biscuit-retro/")
+setwd("/efs/users/[YOURUSERNAME]/tea-biscuit-user/")
 
 # Load packages
 library(tidyverse)
