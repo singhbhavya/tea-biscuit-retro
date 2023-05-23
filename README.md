@@ -37,7 +37,7 @@ Ask Bhavya for *secret link* to download (sorry, cannot post the link here).
 
 ### Option 1
 
-You can create your own RScript and copy-paste commands from the tutorial.Rmd or .html file. Or, you can open the tutorial.Rmd and just run things with me. 
+You can create your own RScript and copy-paste commands from the `tutorial.md` or `.html` file. Or, you can open the tutorial.Rmd and just run things with me. 
 
 ### Option 2
 
