@@ -525,10 +525,10 @@ Here, we will be using the DESEq2 objects from earlier to identify and visualize
 
 First, let's set our p-value and log2foldchange thresholds:
 
-``
+```
 lfc.cutoff <- 1.5
 pval=0.001 
-``
+```
 
 Now, let's extract our significantly differentially-expressed genes and HERVs:
 
