@@ -25,9 +25,12 @@ Tuesday May 23 – Practicals I: Downstream Bulk Retrotranscriptomics
 Log into AWS as per Matthew Bendall's tutorial from [yesterday](https://github.com/nixonlab/teabiscuit), and copy this entire directory into your home directory. All you *really* need are the the `results`, `refs`, and `fgsea` directories, but if you copy the entire directory (as suggested), you'll be able to access intermediate files in case one of the commands fails (I hope not though!)
 
 ```
-cd /fsx/users/[youruid]
 cp -R /efs/projects/tea-biscuit-retro . 
+cd tea-biscuit-retro
 ```
+And now, create your own R script: `File -> New File -> R Script`
+
+Follow along by copying and pasting from the `tutorial.md` file.
 
 ### Option 2:
 
