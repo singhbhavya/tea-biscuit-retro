@@ -11,7 +11,7 @@ Tuesday May 23 – Practicals I: Downstream Bulk Retrotranscriptomics
 | 10:30 AM - 11:00 AM | Coffee break | Coffee speaks for itself |
 | 11:00 - 12:00 AM | Differential expression analysis using DESeq2 | Bhavya |
 | 12:00 - 1:00 PM | Performing Gene-set enrichment analysis | Bhavya |
-| 1:00 PM - 2:30 PM | Lunch | |
+| 1:00 PM - 2:30 PM | Lunch | Ordered at Belfer |
 | 2:30 PM - 3:30 PM | Performing rTWAS | Dr. Rodrigo Duarte | 
 | 3:30 PM - 4:00 PM | Indian Tea and Biscuits | Parle-G |
 | 4:00 PM - 4:30 PM | Performing rTWAS | Dr. Rodrigo Duarte | 
