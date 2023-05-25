@@ -15,7 +15,7 @@ Tuesday May 23 – Practicals I: Downstream Bulk Retrotranscriptomics
 | 2:30 PM - 3:30 PM | Performing rTWAS | Dr. Rodrigo Duarte | 
 | 3:30 PM - 4:00 PM | Indian Tea and Biscuits | Parle-G |
 | 4:00 PM - 4:30 PM | Performing rTWAS | Dr. Rodrigo Duarte | 
-| 8:00 PM - TBD | Meet at Sour Mouse (East Village) for drinks and games (optional) | |
+| 8:00 PM - TBD | Meet at Sour Mouse (East Village) for drinks and games (optional) | Sour Mouse |
 
 
 ## Setup
